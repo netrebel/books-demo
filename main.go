@@ -57,7 +57,7 @@ func getBook(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	json.NewEncoder(w).Encode(&Book{})
+	w.WriteHeader(http.StatusNotFound)
 }
 
 func addBook(w http.ResponseWriter, r *http.Request) {
@@ -108,17 +108,17 @@ func deleteBook(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	json.NewEncoder(w).Encode(&Book{})
+	w.WriteHeader(http.StatusNotFound)
 }
 
 func main() {
-	mux := mux.NewRouter().StrictSlash(true)
-	mux.HandleFunc("/", home)
-	mux.HandleFunc("/books", getBooks).Methods("GET")
-	mux.HandleFunc("/books/{id}", getBook).Methods("GET")
-	mux.HandleFunc("/books", addBook).Methods("POST")
-	mux.HandleFunc("/books/{id}", updateBook).Methods("PUT")
-	mux.HandleFunc("/books/{id}", deleteBook).Methods("DELETE")
+	router := mux.NewRouter().StrictSlash(true)
+	router.HandleFunc("/", home)
+	router.HandleFunc("/books", getBooks).Methods("GET")
+	router.HandleFunc("/books/{id}", getBook).Methods("GET")
+	router.HandleFunc("/books", addBook).Methods("POST")
+	router.HandleFunc("/books/{id}", updateBook).Methods("PUT")
+	router.HandleFunc("/books/{id}", deleteBook).Methods("DELETE")
 	fmt.Println("Listening on http://localhost:8080/")
-	http.ListenAndServe(":8080", mux)
+	http.ListenAndServe(":8080", router)
 }
