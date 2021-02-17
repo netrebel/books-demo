@@ -5,16 +5,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
+	uuid "github.com/satori/go.uuid"
 )
-
-var count int
 
 // Book struct
 type Book struct {
-	ID     int     `json:"id"`
+	ID     string  `json:"id"`
 	Isbn   string  `json:"isbn"`
 	Title  string  `json:"title"`
 	Author *Author `json:"author"`
@@ -51,7 +49,7 @@ func getBook(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	for _, book := range books {
-		if strconv.Itoa(book.ID) == vars["id"] {
+		if book.ID == vars["id"] {
 			log.Printf("Found:  %+v\n", book)
 			json.NewEncoder(w).Encode(book)
 			return
@@ -67,9 +65,7 @@ func addBook(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewDecoder(r.Body).Decode(&book)
 	log.Printf("POST payload: %+v\n", book)
 
-	book.ID = count
-	count++
-
+	book.ID = uuid.NewV4().String()
 	books = append(books, book)
 	log.Printf("%+v\n", books)
 	json.NewEncoder(w).Encode(book)
@@ -81,11 +77,11 @@ func updateBook(w http.ResponseWriter, r *http.Request) {
 
 	var updatedBook Book
 	for index, book := range books {
-		if strconv.Itoa(book.ID) == vars["id"] {
+		if book.ID == vars["id"] {
 			_ = json.NewDecoder(r.Body).Decode(&updatedBook)
 			log.Printf("PUT payload:  %+v\n", updatedBook)
 
-			updatedBook.ID = index
+			updatedBook.ID = book.ID
 			books[index] = updatedBook
 			json.NewEncoder(w).Encode(books[index])
 			return
@@ -100,7 +96,7 @@ func deleteBook(w http.ResponseWriter, r *http.Request) {
 
 	var deletedBook Book
 	for index, book := range books {
-		if strconv.Itoa(book.ID) == vars["id"] {
+		if book.ID == vars["id"] {
 			deletedBook = books[index]
 
 			books = append(books[:index], books[index+1:]...)

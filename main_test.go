@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -11,6 +12,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 )
+
+var bookID string
 
 func Router() *mux.Router {
 	router := mux.NewRouter()
@@ -58,29 +61,40 @@ func TestAddBookSuccess(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	assert.Equal(t, []byte("{\"id\":0,\"isbn\":\"1234\",\"title\":\"Life\",\"author\":{\"first_name\":\"Angel\",\"last_name\":\"Reyes\"}}\n"), body, "Should return created Book")
+
+	var insertedBook Book
+	err = json.Unmarshal(body, &insertedBook)
+	if err != nil {
+		fmt.Printf("Error decoding response: %v\n", err)
+	}
+	bookID = insertedBook.ID
+	assert.Equal(t, "1234", insertedBook.Isbn, "Isbn did not match")
+	assert.Equal(t, "Life", insertedBook.Title, "Title did not match")
+	assert.Equal(t, "Angel", insertedBook.Author.FirstName, "FirstName did not match")
+	assert.Equal(t, "Reyes", insertedBook.Author.LastName, "LastName did not match")
 }
 
 // TestUpdateBookSuccess will only run after POST
 func TestUpdateBookSuccess(t *testing.T) {
 	r := strings.NewReader("{\"isbn\":\"1234\",\"title\":\"Life\",\"author\":{\"first_name\":\"Miguel\",\"last_name\":\"Reyes\"}}")
-	request, _ := http.NewRequest("PUT", "/books/0", r)
+	request, _ := http.NewRequest("PUT", fmt.Sprintf("/books/%v", bookID), r)
 	resp := httptest.NewRecorder()
 	Router().ServeHTTP(resp, request)
 	assert.Equal(t, http.StatusOK, resp.Code, "200 response is expected")
 
-	body, err := ioutil.ReadAll(resp.Body)
-	fmt.Println("HERE: ", string(body))
-	if err != nil {
-		panic(err)
-	}
-	assert.Equal(t, []byte("{\"id\":0,\"isbn\":\"1234\",\"title\":\"Life\",\"author\":{\"first_name\":\"Miguel\",\"last_name\":\"Reyes\"}}\n"), body, "Should return created Book")
+	var updatedBook Book
+	_ = json.NewDecoder(resp.Body).Decode(&updatedBook)
+
+	assert.Equal(t, "1234", updatedBook.Isbn, "Isbn did not match")
+	assert.Equal(t, "Life", updatedBook.Title, "Title did not match")
+	assert.Equal(t, "Miguel", updatedBook.Author.FirstName, "FirstName did not match")
+	assert.Equal(t, "Reyes", updatedBook.Author.LastName, "LastName did not match")
 }
 
 // TestDeleteBookByIdOK will only run after POST
 func TestDeleteBookByIdOK(t *testing.T) {
-	request, _ := http.NewRequest("DELETE", "/books/0", nil)
+	request, _ := http.NewRequest("DELETE", fmt.Sprintf("/books/%v", bookID), nil)
 	resp := httptest.NewRecorder()
 	Router().ServeHTTP(resp, request)
-	assert.Equal(t, http.StatusOK, resp.Code, "404 response is expected")
+	assert.Equal(t, http.StatusOK, resp.Code, "200 response is expected")
 }
