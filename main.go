@@ -75,7 +75,7 @@ func getBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Println("Not found!")
-	w.WriteHeader(http.StatusNotFound)
+	http.Error(w, "404 not found", http.StatusNotFound)
 }
 
 func addBook(w http.ResponseWriter, r *http.Request) {
@@ -133,7 +133,7 @@ func deleteBook(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	w.WriteHeader(http.StatusNotFound)
+	http.Error(w, "404 not found", http.StatusNotFound)
 }
 
 func main() {
