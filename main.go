@@ -1,26 +1,19 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/mux"
+	"github.com/netrebel/books-demo/redisdb"
 	uuid "github.com/satori/go.uuid"
 )
 
-var redisClient = redis.NewClient(&redis.Options{
-	Addr:     getEnv("REDIS_URL", "localhost:6379"),
-	Password: getEnv("REDIS_PASSWORD", ""),
-	DB:       0,
-})
-
-var ctx context.Context = context.TODO()
+var redisDb = redisdb.NewDatabase()
 
 // Book struct
 type Book struct {
@@ -36,6 +29,7 @@ type Author struct {
 	LastName  string `json:"last_name"`
 }
 
+// Used for logging purposes
 func (a *Author) String() string {
 	return fmt.Sprintf("{ FirstName : %s, LastName: %s}", a.FirstName, a.LastName)
 }
@@ -63,7 +57,7 @@ func getBook(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	bookID := vars["id"]
 
-	val, err := redisClient.Get(ctx, bookID).Result()
+	val, err := redisDb.Client.Get(redisdb.Ctx, bookID).Result()
 	if err == redis.Nil {
 		log.Println("Cache miss for id: ", vars["id"])
 		for _, book := range books {
@@ -80,7 +74,7 @@ func getBook(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(b)
 		return
 	}
-	fmt.Println("Not found!")
+	log.Println("Not found!")
 	w.WriteHeader(http.StatusNotFound)
 }
 
@@ -101,7 +95,7 @@ func addBook(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	redisClient.Set(ctx, book.ID, string(m), 24*time.Hour)
+	redisDb.Client.Set(redisdb.Ctx, book.ID, string(m), 24*time.Hour)
 	log.Printf("%+v\n", books)
 	json.NewEncoder(w).Encode(book)
 }
@@ -142,16 +136,8 @@ func deleteBook(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 }
 
-func getEnv(key, defaultValue string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		return defaultValue
-	}
-	return value
-}
-
 func main() {
-	_, err := redisClient.Ping(ctx).Result()
+	_, err := redisDb.Client.Ping(redisdb.Ctx).Result()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -163,6 +149,6 @@ func main() {
 	router.HandleFunc("/books", addBook).Methods("POST")
 	router.HandleFunc("/books/{id}", updateBook).Methods("PUT")
 	router.HandleFunc("/books/{id}", deleteBook).Methods("DELETE")
-	fmt.Println("Listening on http://localhost:8080/")
+	log.Println("Listening on http://localhost:8080/")
 	http.ListenAndServe(":8080", router)
 }
