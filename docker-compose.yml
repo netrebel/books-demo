@@ -13,7 +13,7 @@ services:
     volumes:
       - './:/app'
     ports:
-      - "8080:8080" # Forward the exposed port 8080 on the container to port 8080 on the host machine
+      - "9000:9000" # Forward the exposed port 9000 on the container to port 9000 on the host machine
     # restart: unless-stopped
     depends_on:
       - redis # This service depends on redis. Start that first.

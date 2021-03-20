@@ -36,11 +36,6 @@ func (a *Author) String() string {
 
 var books []Book
 
-func home(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprintf(w, "<h1>Welcome to Books demo!</h1>")
-}
-
 func getBooks(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if books == nil {
@@ -143,12 +138,13 @@ func main() {
 	}
 
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/", home)
+	// Serving static files
+	router.Handle("/", nil).Handler(http.FileServer(http.Dir("./static/")))
 	router.HandleFunc("/books", getBooks).Methods("GET")
 	router.HandleFunc("/books/{id}", getBook).Methods("GET")
 	router.HandleFunc("/books", addBook).Methods("POST")
 	router.HandleFunc("/books/{id}", updateBook).Methods("PUT")
 	router.HandleFunc("/books/{id}", deleteBook).Methods("DELETE")
-	log.Println("Listening on http://localhost:8080/")
-	http.ListenAndServe(":8080", router)
+	log.Println("Listening on http://localhost:9000/")
+	http.ListenAndServe(":9000", router)
 }
