@@ -15,3 +15,4 @@ Note: Redis will cache the value even if the container is stopped.
 # URLs
 
 * Prometheus: http://localhost:9090
+* Grafana: http://localhost:3000

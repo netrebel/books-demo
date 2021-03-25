@@ -44,9 +44,19 @@ services:
     restart: always
     networks: # Networks to join (Services on the same network can communicate with each other using their name)
       - backend
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    networks: # Networks to join (Services on the same network can communicate with each other using their name)
+      - backend
 
 volumes:
   prometheus_data:
+  grafana-storage:
 
 # Networks to be created to facilitate communication between containers
 networks:
