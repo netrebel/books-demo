@@ -10,6 +10,8 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/mux"
 	"github.com/netrebel/books-demo/redisdb"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -131,6 +133,38 @@ func deleteBook(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "404 not found", http.StatusNotFound)
 }
 
+var totalRequests = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "http_requests_total",
+		Help: "Number of get requests.",
+	},
+	[]string{"path"},
+)
+
+func init() {
+	prometheus.Register(totalRequests)
+}
+
+func prometheusMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		route := mux.CurrentRoute(r)
+		path, _ := route.GetPathTemplate()
+		rw := NewResponseWriter(w)
+		next.ServeHTTP(rw, r)
+
+		totalRequests.WithLabelValues(path).Inc()
+	})
+}
+
+type responseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func NewResponseWriter(w http.ResponseWriter) *responseWriter {
+	return &responseWriter{w, http.StatusOK}
+}
+
 func main() {
 	_, err := redisDb.Client.Ping(redisdb.Ctx).Result()
 	if err != nil {
@@ -138,6 +172,7 @@ func main() {
 	}
 
 	router := mux.NewRouter().StrictSlash(true)
+	router.Use(prometheusMiddleware)
 	// Serving static files
 	router.Handle("/", nil).Handler(http.FileServer(http.Dir("./static/")))
 	router.HandleFunc("/books", getBooks).Methods("GET")
@@ -145,6 +180,10 @@ func main() {
 	router.HandleFunc("/books", addBook).Methods("POST")
 	router.HandleFunc("/books/{id}", updateBook).Methods("PUT")
 	router.HandleFunc("/books/{id}", deleteBook).Methods("DELETE")
+
+	// Prometheus endpoint
+	router.Path("/prometheus").Handler(promhttp.Handler())
+
 	log.Println("Listening on http://localhost:9000/")
 	http.ListenAndServe(":9000", router)
 }

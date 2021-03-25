@@ -29,6 +29,24 @@ services:
     restart: unless-stopped
     networks:
       - backend
+  prometheus:
+    image: prom/prometheus:v2.24.0
+    volumes:
+      - ./config/prometheus/:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - 9090:9090
+    restart: always
+    networks: # Networks to join (Services on the same network can communicate with each other using their name)
+      - backend
+
+volumes:
+  prometheus_data:
 
 # Networks to be created to facilitate communication between containers
 networks:
