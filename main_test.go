@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/netrebel/books-demo/handlers"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,11 +18,11 @@ var bookID string
 
 func Router() *mux.Router {
 	router := mux.NewRouter()
-	router.HandleFunc("/books", getBooks).Methods("GET")
-	router.HandleFunc("/books/{id}", getBook).Methods("GET")
-	router.HandleFunc("/books/{id}", deleteBook).Methods("DELETE")
-	router.HandleFunc("/books", addBook).Methods("POST")
-	router.HandleFunc("/books/{id}", updateBook).Methods("PUT")
+	router.HandleFunc("/books", handlers.GetBooks).Methods("GET")
+	router.HandleFunc("/books/{id}", handlers.GetBook).Methods("GET")
+	router.HandleFunc("/books/{id}", handlers.DeleteBook).Methods("DELETE")
+	router.HandleFunc("/books", handlers.AddBook).Methods("POST")
+	router.HandleFunc("/books/{id}", handlers.UpdateBook).Methods("PUT")
 	return router
 }
 
@@ -62,7 +63,7 @@ func TestAddBookSuccess(t *testing.T) {
 		panic(err)
 	}
 
-	var insertedBook Book
+	var insertedBook handlers.Book
 	err = json.Unmarshal(body, &insertedBook)
 	if err != nil {
 		fmt.Printf("Error decoding response: %v\n", err)
@@ -82,7 +83,7 @@ func TestUpdateBookSuccess(t *testing.T) {
 	Router().ServeHTTP(resp, request)
 	assert.Equal(t, http.StatusOK, resp.Code, "200 response is expected")
 
-	var updatedBook Book
+	var updatedBook handlers.Book
 	_ = json.NewDecoder(resp.Body).Decode(&updatedBook)
 
 	assert.Equal(t, "1234", updatedBook.Isbn, "Isbn did not match")
