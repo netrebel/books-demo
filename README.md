@@ -18,6 +18,59 @@ Note: Redis will cache the value even if the container is stopped.
 * Prometheus: http://localhost:9090
 * Grafana: http://localhost:3000
 
+## Endpoints
+
+POST /books
+
+```sh
+curl --location --request POST 'http://localhost:9000/books' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "isbn": "1234",
+    "title": "Sky",
+    "author": {
+        "first_name" : "John",
+        "last_name" : "Doe"
+    }
+}'
+```
+
+GET /books
+
+```sh
+curl --location --request GET 'http://localhost:9000/books'
+```
+
+GET /books/{id}
+```sh
+curl --location --request GET 'http://localhost:9000/books/{id}'
+```
+
+DELETE /books/{id}
+```sh
+curl --location --request DELETE 'http://localhost:9000/books/{id}'
+```
+
+PUT /books/{id}
+```sh
+curl --location --request PUT 'http://localhost:9000/books/{id}' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "isbn": "1234",
+    "title": "Sky",
+    "author": {
+        "first_name" : "Miguel",
+        "last_name" : "Reyes"
+    }
+}'
+```
+
+GET prometheus/
+
+```sh
+curl --location --request GET 'http://localhost:9000/prometheus'
+```
+
 # Load tests
 
 ```
