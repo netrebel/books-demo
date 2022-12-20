@@ -1,13 +1,13 @@
 package promutil
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/rs/zerolog/log"
 )
 
 func init() {
@@ -46,7 +46,7 @@ func PrometheusMiddleware(next http.Handler) http.Handler {
 		rw := NewResponseWriter(w)
 		next.ServeHTTP(rw, r)
 
-		log.Printf("inc for path: %v\n", path)
+		log.Info().Msgf("inc for path: %v", path)
 		totalRequests.WithLabelValues(path).Inc()
 
 		responseStatus.WithLabelValues(strconv.Itoa(rw.statusCode)).Inc()

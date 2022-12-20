@@ -1,16 +1,19 @@
 package main
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/netrebel/books-demo/handlers"
 	"github.com/netrebel/books-demo/promutil"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 func main() {
+
+	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 
 	router := mux.NewRouter().StrictSlash(true)
 	router.Use(promutil.PrometheusMiddleware)
@@ -25,6 +28,6 @@ func main() {
 	// Prometheus endpoint
 	router.Path("/prometheus").Handler(promhttp.Handler())
 
-	log.Println("Listening on http://localhost:9000/")
+	log.Info().Msg("Listening on http://localhost:9000/")
 	http.ListenAndServe(":9000", router)
 }

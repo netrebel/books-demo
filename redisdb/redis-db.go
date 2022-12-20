@@ -3,10 +3,10 @@ package redisdb
 import (
 	"context"
 	"errors"
-	"log"
 	"os"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/rs/zerolog/log"
 )
 
 // Database struct
@@ -23,7 +23,7 @@ var (
 
 // NewDatabase returns redisClient that can be shared across the app
 func NewDatabase() *Database {
-	log.Println("Initializing Redis client...")
+	log.Info().Msg("Initializing Redis client...")
 	client := redis.NewClient(&redis.Options{
 		Addr:     getEnv("REDIS_URL", "localhost:6379"),
 		Password: getEnv("REDIS_PASSWORD", ""),
